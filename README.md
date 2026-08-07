@@ -84,7 +84,7 @@ graph TD
 
 ## Notebook Guide
 
-This repository contains three main notebooks to execute the workflow:
+This repository contains four main notebooks to execute the workflow:
 
 | Notebook | Purpose | Usage Frequency |
 | :--- | :--- | :--- |
@@ -92,6 +92,7 @@ This repository contains three main notebooks to execute the workflow:
 | `train_stage2.ipynb` | Load the Stage 1 checkpoint from the Hugging Face Hub. Fine-tune on your specific local domain data. Push the updated checkpoint back to the Hub. | Whenever new labeled target data is collected. |
 | `test_model.ipynb` | Load the final Stage 2 checkpoint from the Hugging Face Hub. Test the model performance on images and videos. | Every time you need to evaluate or verify model changes. |
 | `age_classifier_v3.ipynb` | Extract region-based color and texture histogram features from PETA, train one SVM per age attribute (one vs rest), evaluate with per-attribute mean Accuracy (mA), and test on a video via person detection + crop classification. | Once (or during major retraining runs). |
+| `unified_inference.ipynb` | Load **both** the gender ViT and age SVM from the Hugging Face Hub, run a person detector, and produce a single annotated output video with gender and age labels on every detected person. | Any time you want end-to-end predictions on a new video. |
 
 ---
 
@@ -236,4 +237,11 @@ drive.mount('/content/drive')
 Saved checkpoints are stored in `/content/drive/MyDrive/IPD_checkpoints/`.
 
 ### Age Model Classifiers
-The age model's classifiers are much smaller than the ViT checkpoints and are saved as a pickled dictionary of per-attribute SVMs (`classifiers.pkl`, roughly 79 MB, about 35 MB zipped). They can be shared the same way as the gender checkpoints, via the Hugging Face Hub, Google Drive, or a direct pickle transfer.
+The age model bundle (`age_classifier_bundle.pkl`, ~36 MB) is hosted on the Hugging Face Hub alongside the gender checkpoints:
+
+```bash
+# Download the age SVM bundle
+hf download abhshkp/footfall-analysis-age-svm age_classifier_bundle.pkl
+```
+
+The bundle contains the trained per-attribute SVMs, their kernel configs, the training feature matrix (`X_train`), and the hyperparameters used during training — everything needed for correct inference without retraining.
